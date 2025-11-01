@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventica - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .admin-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stats-container {
+            background: #f8f9fa;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .controls-container {
+            background: #e8f4f8;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .registrations-container {
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .registration-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .registration-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        input, button, select {
+            padding: 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .refresh-btn {
+            background: #27ae60;
+            width: auto;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        
+        .refresh-btn:hover {
+            background: #219a52;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            padding: 8px 15px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .delete-all-btn {
+            background: #e74c3c;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        
+        .delete-all-btn:hover {
+            background: #c0392b;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .registrations-count {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .registration-actions {
+            text-align: right;
+            min-width: 140px;
+        }
+        
+        .registration-info {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 🔐 PANTALLA DE LOGIN -->
+    <div id="loginScreen" class="login-container">
+        <h2>🔐 Panel de Administración</h2>
+        <p style="color: #666; margin: 15px 0;">Eventica - Gestión de Registros</p>
+        <input type="password" id="adminPassword" placeholder="Ingresa la contraseña de administrador">
+        <button onclick="login()">Acceder al Panel</button>
+        <p style="color: #999; font-size: 12px; margin-top: 20px;">
+            Contraseña: admin123
+        </p>
+    </div>
+
+    <!-- 📊 PANEL DE ADMINISTRACIÓN -->
+    <div id="adminScreen" class="admin-container hidden">
+        <div class="admin-header">
+            <h1>📊 Panel de Administración - Eventica</h1>
+            <p>Gestión de registros y estadísticas en tiempo real</p>
+        </div>
+
+        <button onclick="logout()" 
+                style="position: fixed; top: 30px; right: 80px; background: #95a5a6; color: white; 
+                   border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; 
+                   font-size: 14px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+            🚪 Cerrar Sesión
+        </button>
+        
+        <!-- Estadísticas -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>👥 Total Registrados</h3>
+                <p id="totalRegistrations" style="font-size: 24px; font-weight: bold; color: #3498db;">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>🎫 Tickets Vendidos</h3>
+                <p id="totalTickets" style="font-size: 24px; font-weight: bold; color: #e74c3c;">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>💰 Revenue Total</h3>
+                <p id="totalRevenue" style="font-size: 24px; font-weight: bold; color: #27ae60;">$0</p>
+            </div>
+            <div class="stat-card">
+                <h3>🕒 Última Actualización</h3>
+                <p id="lastUpdate" style="font-size: 14px; color: #666;">--</p>
+            </div>
+        </div>
+
+        <!-- ✅ NUEVO: Controles de ordenamiento y acciones -->
+        <div class="controls-container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Controles de ordenamiento -->
+                <div class="control-group">
+                    <h3 style="margin-bottom: 10px;">🔀 Ordenar Registros</h3>
+                    <label for="sortBy">Ordenar por:</label>
+                    <select id="sortBy" onchange="sortRegistrations()">
+                        <option value="dateDesc">📅 Fecha (más reciente)</option>
+                        <option value="dateAsc">📅 Fecha (más antiguo)</option>
+                        <option value="amountDesc">💰 Monto (mayor a menor)</option>
+                        <option value="amountAsc">💰 Monto (menor a mayor)</option>
+                        <option value="nameAsc">👤 Nombre (A-Z)</option>
+                        <option value="nameDesc">👤 Nombre (Z-A)</option>
+                    </select>
+                </div>
+                
+                <!-- Acciones de administración -->
+                <div class="control-group">
+                    <h3 style="margin-bottom: 10px;">⚙️ Acciones</h3>
+                    <button class="refresh-btn" onclick="loadRegistrations()">
+                        🔄 Actualizar Datos
+                    </button>
+                    <button class="delete-all-btn" onclick="deleteAllRegistrations()">
+                        🗑️ Eliminar TODOS los registros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de registros -->
+        <div class="registrations-container">
+            <h3 style="margin-bottom: 15px;">📝 Registros de Asistentes</h3>
+            <div id="registrationsCount" class="registrations-count">
+                Cargando...
+            </div>
+            <div id="registrationsList">
+                <p style="text-align: center; color: #666; padding: 20px;">
+                    Cargando registros...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://5o59dexiv8.execute-api.us-east-1.amazonaws.com/prod';
+        const ADMIN_PASSWORD = 'admin123';
+        
+        // ✅ NUEVO: Variable global para almacenar registros
+        let currentRegistrations = [];
+
+        function login() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminScreen').classList.remove('hidden');
+                loadRegistrations();
+            } else {
+                alert('❌ Contraseña incorrecta. Intenta nuevamente.');
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('adminScreen').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        // ✅ MODIFICADA: Guardar registros en variable global
+        async function loadRegistrations() {
+            try {
+                document.getElementById('registrationsList').innerHTML = 
+                    '<p style="text-align: center; color: #666; padding: 20px;">Cargando registros...</p>';
+                
+                const response = await fetch(`${API_URL}/registrations`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentRegistrations = data.data;
+                    updateStats(data.data);
+                    sortRegistrations(); // Aplicar ordenamiento por defecto
+                } else {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('registrationsList').innerHTML = 
+                    '<p style="text-align: center; color: #e74c3c; padding: 20px;">Error cargando registros. Verifica la conexión.</p>';
+            }
+        }
+
+        function updateStats(registrations) {
+            const totalRegistrations = registrations.length;
+            const totalTickets = registrations.reduce((sum, reg) => sum + reg.quantity, 0);
+            const totalRevenue = registrations.reduce((sum, reg) => sum + reg.totalAmount, 0);
+            
+            document.getElementById('totalRegistrations').textContent = totalRegistrations;
+            document.getElementById('totalTickets').textContent = totalTickets;
+            document.getElementById('totalRevenue').textContent = `$${totalRevenue}`;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        // ✅ NUEVA FUNCIÓN: Ordenar registros
+        function sortRegistrations() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            const sorted = [...currentRegistrations].sort((a, b) => {
+                switch (sortBy) {
+                    case 'dateDesc':
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    case 'dateAsc':
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    case 'amountDesc':
+                        return b.totalAmount - a.totalAmount;
+                    case 'amountAsc':
+                        return a.totalAmount - b.totalAmount;
+                    case 'nameAsc':
+                        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+                    case 'nameDesc':
+                        return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`);
+                    default:
+                        return 0;
+                }
+            });
+            
+            displayRegistrations(sorted);
+        }
+
+        // ✅ MODIFICADA: Mostrar registros con botones de eliminar
+        function displayRegistrations(registrations) {
+            if (registrations.length === 0) {
+                document.getElementById('registrationsList').innerHTML = 
+                    '<p style="text-align: center; color: #666; padding: 20px;">No hay registros aún.</p>';
+                document.getElementById('registrationsCount').textContent = '0 registros';
+                return;
+            }
+
+            document.getElementById('registrationsCount').textContent = 
+                `Mostrando ${registrations.length} registros`;
+
+            const html = registrations.map(reg => `
+                <div class="registration-card">
+                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px;">
+                        <!-- Información del registro -->
+                        <div class="registration-info">
+                            <h4 style="color: #2c3e50; margin-bottom: 8px;">
+                                ${reg.firstName} ${reg.lastName}
+                            </h4>
+                            <p><strong>📧 Email:</strong> ${reg.email}</p>
+                            <p><strong>🎫 Ticket:</strong> ${reg.ticketType} x ${reg.quantity}</p>
+                            <p><strong>💰 Total:</strong> $${reg.totalAmount}</p>
+                            <p><strong>📞 Teléfono:</strong> ${reg.phone || 'No proporcionado'}</p>
+                            <p><strong>📰 Newsletter:</strong> ${reg.newsletter ? 'Sí' : 'No'}</p>
+                            <p><strong>🆔 ID:</strong> <code style="font-size: 11px;">${reg.registrationId}</code></p>
+                            <p><strong>📅 Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
+                        </div>
+                        
+                        <!-- ✅ NUEVO: Acciones -->
+                        <div class="registration-actions">
+                            <div style="background: ${getStatusColor(reg.status)}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; margin-bottom: 10px; display: inline-block;">
+                                ${reg.status || 'confirmed'}
+                            </div>
+                            <br>
+                            <button class="delete-btn" onclick="deleteRegistration('${reg.registrationId}')">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('registrationsList').innerHTML = html;
+        }
+
+        // ✅ NUEVA FUNCIÓN: Eliminar registro individual
+        async function deleteRegistration(registrationId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este registro?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/registrations/${registrationId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Registro eliminado correctamente');
+                    loadRegistrations(); // Recargar la lista
+                } else {
+                    alert('❌ Error al eliminar: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al eliminar registro');
+            }
+        }
+
+        // ✅ NUEVA FUNCIÓN: Eliminar todos los registros
+        async function deleteAllRegistrations() {
+            if (currentRegistrations.length === 0) {
+                alert('ℹ️ No hay registros para eliminar');
+                return;
+            }
+            
+            if (!confirm(`⚠️ ¿ESTÁS ABSOLUTAMENTE SEGURO?\n\nEsta acción eliminará TODOS los registros (${currentRegistrations.length} registros) y NO se puede deshacer.`)) {
+                return;
+            }
+            
+            if (!confirm('❌ CONFIRMACIÓN FINAL: Esto borrará permanentemente toda la base de datos. ¿Continuar?')) {
+                return;
+            }
+            
+            try {
+                // Mostrar loading
+                document.getElementById('registrationsList').innerHTML = 
+                    '<p style="text-align: center; color: #666; padding: 20px;">Eliminando registros...</p>';
+                
+                // Eliminar uno por uno
+                let deletedCount = 0;
+                let errorCount = 0;
+                
+                for (const reg of currentRegistrations) {
+                    try {
+                        const response = await fetch(`${API_URL}/registrations/${reg.registrationId}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (response.ok) {
+                            deletedCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        errorCount++;
+                    }
+                }
+                
+                // Mostrar resultados
+                if (errorCount === 0) {
+                    alert(`✅ Todos los registros eliminados correctamente (${deletedCount} registros)`);
+                } else {
+                    alert(`⚠️ Se eliminaron ${deletedCount} registros, pero ${errorCount} fallaron`);
+                }
+                
+                // Recargar la lista
+                loadRegistrations();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar los registros');
+            }
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'confirmed': '#27ae60',
+                'pending': '#f39c12', 
+                'cancelled': '#e74c3c'
+            };
+            return colors[status] || '#3498db';
+        }
+
+        // Cargar registros automáticamente cada 30 segundos
+        setInterval(() => {
+            if (!document.getElementById('adminScreen').classList.contains('hidden')) {
+                loadRegistrations();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
